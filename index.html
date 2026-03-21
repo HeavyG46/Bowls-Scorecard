@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Pro Bowls Scorer</title>
+    <title>Pro Bowls Scorer - Fours Edition</title>
     
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -14,43 +14,56 @@
     
     <style>
         :root { --green: #1b5e20; --blue: #0d47a1; --red: #b71c1c; --gold: #ffd700; --light: #f4f4f4; }
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background: var(--green); color: #333; margin: 0; padding: 10px; }
-        .app-container { background: var(--light); max-width: 500px; margin: auto; border-radius: 15px; padding: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); min-height: 90vh; }
+        body { font-family: -apple-system, system-ui, sans-serif; background: var(--green); color: #333; margin: 0; padding: 10px; }
+        .app-container { background: var(--light); max-width: 500px; margin: auto; border-radius: 15px; padding: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); min-height: 95vh; }
         
-        /* Header & Timer */
-        .meta-header { display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 0.8rem; font-weight: bold; }
-        .timer-display { background: #333; color: var(--gold); padding: 10px; border-radius: 8px; text-align: center; margin-bottom: 15px; font-family: monospace; }
-        
-        /* Setup Section */
+        /* Header & Inputs */
+        .meta-header { display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 0.8rem; }
         #setup-section { background: #e0e0e0; padding: 15px; border-radius: 10px; margin-bottom: 15px; }
         .roster-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-        input[type="text"] { width: 90%; padding: 5px; margin: 3px 0; border: 1px solid #ccc; border-radius: 4px; }
-        
+        input { width: 92%; padding: 6px; margin: 3px 0; border: 1px solid #ccc; border-radius: 4px; font-size: 0.85rem; }
+        .club-input { background: #fff9c4; font-weight: bold; border: 1px solid var(--gold); }
+
+        /* Timer */
+        .timer-box { background: #333; color: var(--gold); padding: 8px; border-radius: 8px; text-align: center; margin-bottom: 10px; font-family: monospace; }
+
         /* Scoreboard */
         .scoreboard { display: flex; justify-content: space-between; align-items: center; background: white; padding: 15px; border-radius: 10px; border-bottom: 4px solid #ddd; }
         .score-val { font-size: 3rem; font-weight: 900; color: var(--green); margin: 0; }
-        .team-label { font-size: 0.75rem; color: #666; text-transform: uppercase; font-weight: bold; }
-        
-        /* Controls */
+        .team-label { font-size: 0.8rem; color: #444; text-align: center; line-height: 1.2; }
+
+        /* Buttons */
         .btn-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px; }
-        button { padding: 15px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; transition: 0.2s; }
+        button { padding: 14px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 1rem; }
         .btn-a { background: var(--blue); color: white; }
         .btn-b { background: var(--red); color: white; }
-        .btn-undo { background: #777; color: white; grid-column: span 2; }
-        
-        /* Score Table */
+        .btn-undo { background: #777; color: white; grid-column: span 2; font-size: 0.8rem; }
+
+        /* Table */
         table { width: 100%; margin-top: 20px; border-collapse: collapse; background: white; border-radius: 8px; overflow: hidden; }
-        th { background: #eee; padding: 10px; font-size: 0.8rem; }
+        th { background: #eee; padding: 8px; font-size: 0.75rem; text-transform: uppercase; }
         td { border-bottom: 1px solid #f0f0f0; padding: 10px; text-align: center; font-weight: bold; }
-        
+
         /* Signatures */
         #signature-section { display: none; margin-top: 20px; border-top: 2px dashed #ccc; padding-top: 15px; }
-        canvas { border: 1px solid #bbb; background: #fff; width: 100%; height: 100px; border-radius: 5px; }
-        .share-btn { background: #007bff; color: white; width: 100%; margin-top: 10px; }
-        .pdf-btn { background: var(--green); color: white; width: 100%; margin-top: 10px; }
+        canvas { border: 1px solid #bbb; background: #fff; width: 100%; height: 100px; border-radius: 5px; touch-action: none; }
+        
+        /* Celebration Overlay */
+        .winner-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 1000; justify-content: center; align-items: center; flex-direction: column; color: white; text-align: center; }
+        .winner-card { background: white; color: #333; padding: 30px; border-radius: 20px; border: 5px solid var(--gold); width: 80%; }
     </style>
 </head>
 <body>
+
+<div id="winner-pop" class="winner-overlay">
+    <div class="winner-card">
+        <h1>🏆</h1>
+        <h2>CONGRATULATIONS</h2>
+        <h1 id="winner-name" style="color: var(--green); margin: 10px 0;">WINNER</h1>
+        <p>Match completed!</p>
+        <button onclick="document.getElementById('winner-pop').style.display='none'" style="background: var(--green); color: white;">View Scorecard</button>
+    </div>
+</div>
 
 <div class="app-container">
     <div class="meta-header">
@@ -58,26 +71,28 @@
         <input type="time" id="match-time">
     </div>
 
-    <div class="timer-display" id="timer-box">
-        <div id="display-time" style="font-size: 1.5rem;">02:15:00</div>
-        <button onclick="toggleTimer()" id="timer-btn" style="font-size: 0.7rem; padding: 4px 10px;">Start Clock</button>
+    <div class="timer-box">
+        <div id="display-time" style="font-size: 1.4rem;">02:15:00</div>
+        <button onclick="toggleTimer()" id="timer-btn" style="padding: 2px 10px; font-size: 0.7rem; background: #555; color: white; border-radius: 4px;">Start Timer</button>
     </div>
 
     <div id="setup-section">
         <div class="roster-grid">
             <div>
-                <strong>Team A</strong><br>
-                <input type="text" id="pA1" placeholder="Lead"><br>
-                <input type="text" id="pA2" placeholder="Second"><br>
-                <input type="text" id="pA3" placeholder="Third"><br>
+                <strong>TEAM A</strong><br>
+                <input type="text" id="clubA" class="club-input" placeholder="Club Name">
                 <input type="text" id="pA4" placeholder="Skip">
+                <input type="text" id="pA3" placeholder="Third">
+                <input type="text" id="pA2" placeholder="Second">
+                <input type="text" id="pA1" placeholder="Lead">
             </div>
             <div>
-                <strong>Team B</strong><br>
-                <input type="text" id="pB1" placeholder="Lead"><br>
-                <input type="text" id="pB2" placeholder="Second"><br>
-                <input type="text" id="pB3" placeholder="Third"><br>
+                <strong>TEAM B</strong><br>
+                <input type="text" id="clubB" class="club-input" placeholder="Club Name">
                 <input type="text" id="pB4" placeholder="Skip">
+                <input type="text" id="pB3" placeholder="Third">
+                <input type="text" id="pB2" placeholder="Second">
+                <input type="text" id="pB1" placeholder="Lead">
             </div>
         </div>
         <button onclick="lockTeams()" id="lock-btn" style="width:100%; margin-top:10px; background:#333; color:white;">Confirm Lineups</button>
@@ -86,15 +101,11 @@
     <h2 id="match-status" style="text-align:center; color:var(--green); margin:10px 0;">End 1 of 21</h2>
 
     <div class="scoreboard">
-        <div style="text-align:center;">
-            <div class="team-label" id="labelA">Team A</div>
-            <div class="score-val" id="totalA">0</div>
-        </div>
+        <div class="team-label" id="labelA">TEAM A</div>
+        <div class="score-val" id="totalA">0</div>
         <div style="font-weight:bold; color:#ccc;">VS</div>
-        <div style="text-align:center;">
-            <div class="team-label" id="labelB">Team B</div>
-            <div class="score-val" id="totalB">0</div>
-        </div>
+        <div class="score-val" id="totalB">0</div>
+        <div class="team-label" id="labelB">TEAM B</div>
     </div>
 
     <div class="btn-grid">
@@ -113,8 +124,8 @@
             <div style="text-align:center;"><small id="sig-labelA">Skip A Sign</small><canvas id="sig-a"></canvas></div>
             <div style="text-align:center;"><small id="sig-labelB">Skip B Sign</small><canvas id="sig-b"></canvas></div>
         </div>
-        <button class="share-btn" onclick="shareResults()">📤 Share Result</button>
-        <button class="pdf-btn" onclick="exportPDF()">📥 Download PDF Scorecard</button>
+        <button onclick="sharePDF()" style="width:100%; margin-top:15px; background:#007bff; color:white;">📤 Share PDF via WhatsApp</button>
+        <button onclick="location.reload()" style="width:100%; margin-top:10px; background:#444; color:white; font-size: 0.7rem;">♻️ New Match</button>
     </div>
 </div>
 
@@ -123,27 +134,37 @@
     const maxEnds = 21;
     let timeLeft = 135 * 60, timerRunning = false, timerInterval;
 
-    // Initialize Date/Time
     window.onload = () => {
         document.getElementById('match-date').value = new Date().toISOString().split('T')[0];
         document.getElementById('match-time').value = new Date().toTimeString().substring(0,5);
     };
 
     function lockTeams() {
-        const skipA = document.getElementById('pA4').value || "Team A";
-        const skipB = document.getElementById('pB4').value || "Team B";
-        document.getElementById('labelA').innerText = skipA;
-        document.getElementById('labelB').innerText = skipB;
-        document.getElementById('setup-section').style.display = 'none';
+        const cA = document.getElementById('clubA').value || "Club A";
+        const cB = document.getElementById('clubB').value || "Club B";
+        const sA = document.getElementById('pA4').value || "Skip A";
+        const sB = document.getElementById('pB4').value || "Skip B";
+        
+        document.getElementById('labelA').innerHTML = `<strong>${cA}</strong><br><small>${sA}</small>`;
+        document.getElementById('labelB').innerHTML = `<strong>${cB}</strong><br><small>${sB}</small>`;
+
+        let rosterHTML = `<div class="roster-grid" style="font-size:0.75rem; background:white; padding:10px; border:1px solid #ddd; border-radius:5px;">
+            <div><strong>${cA}</strong><br>S: ${sA}<br>3: ${document.getElementById('pA3').value}<br>2: ${document.getElementById('pA2').value}<br>L: ${document.getElementById('pA1').value}</div>
+            <div><strong>${cB}</strong><br>S: ${sB}<br>3: ${document.getElementById('pB3').value}<br>2: ${document.getElementById('pB2').value}<br>L: ${document.getElementById('pB1').value}</div>
+        </div>`;
+        
+        document.getElementById('setup-section').innerHTML = rosterHTML;
+        document.getElementById('sig-labelA').innerText = cA + " Skip";
+        document.getElementById('sig-labelB').innerText = cB + " Skip";
     }
 
     function handleWin(team) {
         if (currentEnd > maxEnds) return;
-        let shots = parseInt(prompt(`Shots scored by Team ${team}? (1-8)`, "1"));
+        let shots = parseInt(prompt(`Shots for ${team === 'A' ? 'Team A' : 'Team B'}? (1-8)`, "1"));
         if (isNaN(shots) || shots < 1 || shots > 8) return;
 
-        history.push({ end: currentEnd, sA: (team==='A'?shots:0), sB: (team==='B'?shots:0) });
-        if (team==='A') scoreA += shots; else scoreB += shots;
+        history.push({ end: currentEnd, sA: (team === 'A' ? shots : 0), sB: (team === 'B' ? shots : 0) });
+        if (team === 'A') scoreA += shots; else scoreB += shots;
         currentEnd++;
         render();
     }
@@ -158,21 +179,22 @@
     function render() {
         document.getElementById('totalA').innerText = scoreA;
         document.getElementById('totalB').innerText = scoreB;
-        
         let diff = Math.abs(scoreA - scoreB);
         let possible = (maxEnds - (currentEnd - 1)) * 8;
-        
+
         if ((diff > possible && currentEnd > 1) || currentEnd > maxEnds) {
-            document.getElementById('match-status').innerHTML = "🏆 GAME COMPLETE";
+            document.getElementById('match-status').innerText = "🏆 GAME COMPLETE";
+            const winName = scoreA > scoreB ? "TEAM A" : "TEAM B";
+            document.getElementById('winner-name').innerText = winName;
+            document.getElementById('winner-pop').style.display = 'flex';
             finishMatch();
         } else {
             document.getElementById('match-status').innerText = `End ${currentEnd} of ${maxEnds}`;
-            document.getElementById('signature-section').style.display = 'none';
         }
 
         let html = "";
         [...history].reverse().forEach(e => {
-            html += `<tr><td>${e.end}</td><td>${e.sA||'-'}</td><td>${e.sB||'-'}</td></tr>`;
+            html += `<tr><td>${e.end}</td><td>${e.sA || '-'}</td><td>${e.sB || '-'}</td></tr>`;
         });
         document.getElementById('card-body').innerHTML = html;
     }
@@ -182,8 +204,20 @@
         if (!padA) {
             padA = new SignaturePad(document.getElementById('sig-a'));
             padB = new SignaturePad(document.getElementById('sig-b'));
-            document.getElementById('sig-labelA').innerText = document.getElementById('labelA').innerText;
-            document.getElementById('sig-labelB').innerText = document.getElementById('labelB').innerText;
+        }
+    }
+
+    async function sharePDF() {
+        const element = document.querySelector('.app-container');
+        const opt = { margin: 10, filename: 'MatchResult.pdf', image: { type: 'jpeg', quality: 0.98 }, html2canvas: { scale: 2 }, jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' } };
+        
+        const blob = await html2pdf().set(opt).from(element).output('blob');
+        const file = new File([blob], 'Bowls_Result.pdf', { type: 'application/pdf' });
+
+        if (navigator.canShare && navigator.canShare({ files: [file] })) {
+            await navigator.share({ files: [file], title: 'Match Result' });
+        } else {
+            html2pdf().set(opt).from(element).save();
         }
     }
 
@@ -193,24 +227,10 @@
                 timeLeft--;
                 let h = Math.floor(timeLeft/3600), m = Math.floor((timeLeft%3600)/60), s = timeLeft%60;
                 document.getElementById('display-time').innerText = `${h.toString().padStart(2,'0')}:${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
-                if (timeLeft <= 0) clearInterval(timerInterval);
             }, 1000);
             document.getElementById('timer-btn').innerText = "Pause";
-        } else {
-            clearInterval(timerInterval);
-            document.getElementById('timer-btn').innerText = "Resume";
-        }
+        } else { clearInterval(timerInterval); document.getElementById('timer-btn').innerText = "Resume"; }
         timerRunning = !timerRunning;
-    }
-
-    async function shareResults() {
-        const text = `🎳 Bowls Result:\n${document.getElementById('labelA').innerText}: ${scoreA}\n${document.getElementById('labelB').innerText}: ${scoreB}\nEnds: ${currentEnd-1}`;
-        if (navigator.share) await navigator.share({ title: 'Match Result', text: text });
-        else alert("Shared to clipboard:\n" + text);
-    }
-
-    function exportPDF() {
-        html2pdf().from(document.querySelector('.app-container')).save(`Scorecard_End_${currentEnd-1}.pdf`);
     }
 </script>
 </body>

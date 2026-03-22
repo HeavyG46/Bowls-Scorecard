@@ -3,157 +3,160 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Pro Bowls Scorer - Final Version</title>
+    <title>Pro Bowls - Custom Ends Edition</title>
     
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.0.0/dist/signature_pad.umd.min.js"></script>
     
     <style>
         :root { --green: #1b5e20; --blue: #0d47a1; --red: #b71c1c; --gold: #ffd700; --light: #f4f4f4; }
-        body { font-family: -apple-system, sans-serif; background: var(--green); margin: 0; padding: 10px; }
-        .app-container { background: var(--light); max-width: 480px; margin: auto; border-radius: 15px; padding: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); min-height: 90vh; }
+        body { font-family: -apple-system, sans-serif; background: var(--green); margin: 0; padding: 5px; }
         
-        /* Overlays */
-        .overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 9999; justify-content: center; align-items: center; flex-direction: column; color: white; text-align: center; }
-        .card { background: white; color: #333; padding: 20px; border-radius: 20px; width: 85%; max-width: 320px; }
+        .app-container { 
+            background: var(--light); 
+            max-width: 400px; 
+            margin: auto; 
+            border-radius: 10px; 
+            padding: 10px; 
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
         
-        /* Keypad */
-        .keypad-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 15px; }
-        .num-btn { background: #eee; border: none; padding: 18px; font-size: 1.4rem; font-weight: bold; border-radius: 10px; cursor: pointer; }
-        
-        /* Sign Modal (Enlarged) */
-        .sig-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; z-index: 10000; flex-direction: column; padding: 20px; box-sizing: border-box; }
-        #modal-canvas { border: 2px solid var(--green); flex-grow: 1; background: #fff; width: 100%; border-radius: 10px; touch-action: none; }
+        input, select { padding: 4px; margin: 2px 0; border: 1px solid #ccc; border-radius: 4px; font-size: 0.75rem; }
+        .club-input { background: #fff9c4; font-weight: bold; width: 90%; }
+        .player-input { width: 90%; }
 
-        /* Scoreboard & Table */
-        .scoreboard { display: flex; justify-content: space-between; align-items: center; background: white; padding: 10px; border-radius: 10px; border-bottom: 4px solid #ddd; }
-        .score-val { font-size: 2.8rem; font-weight: 900; color: var(--green); }
-        table { width: 100%; margin-top: 15px; border-collapse: collapse; background: white; border-radius: 8px; overflow: hidden; }
-        th { background: #eee; padding: 6px; font-size: 0.7rem; }
-        td { border-bottom: 1px solid #eee; padding: 8px; text-align: center; font-weight: bold; }
-        tr.history-row:active { background: #fff9c4; }
+        .overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 9999; justify-content: center; align-items: center; flex-direction: column; color: white; }
+        .card { background: white; color: #333; padding: 15px; border-radius: 15px; width: 80%; text-align: center; }
+        
+        .keypad-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 10px; }
+        .num-btn { background: #eee; border: none; padding: 15px; font-size: 1.2rem; font-weight: bold; border-radius: 8px; cursor: pointer; }
 
-        /* Buttons */
-        .btn-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 15px; }
-        .main-btn { padding: 14px; border: none; border-radius: 8px; font-weight: bold; color: white; cursor: pointer; }
-        .btn-a { background: var(--blue); } .btn-b { background: var(--red); }
-        canvas { border: 1px solid #bbb; background: #fff; width: 100%; height: 80px; border-radius: 5px; cursor: pointer; }
+        .scoreboard { display: flex; justify-content: space-around; align-items: center; background: white; padding: 5px; border-radius: 8px; margin-bottom: 5px; border-bottom: 3px solid #ddd; }
+        .score-val { font-size: 2.2rem; font-weight: 900; color: var(--green); }
+        .team-label { font-size: 0.7rem; text-align: center; width: 100px; overflow: hidden; line-height: 1.1; }
+
+        table { width: 100%; border-collapse: collapse; background: white; font-size: 0.7rem; margin-top: 5px; }
+        th { background: #eee; padding: 3px; border: 1px solid #ddd; }
+        td { border: 1px solid #eee; padding: 3px; text-align: center; font-weight: bold; }
+
+        canvas { border: 1px solid #bbb; background: #fff; width: 100%; height: 50px; border-radius: 4px; cursor: pointer; }
+        .sig-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; z-index: 10000; flex-direction: column; padding: 10px; }
+        #modal-canvas { border: 2px solid var(--green); flex-grow: 1; width: 100%; }
+
+        .btn-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; margin-top: 8px; }
+        .main-btn { padding: 10px; border: none; border-radius: 5px; font-weight: bold; color: white; font-size: 0.8rem; cursor: pointer; }
     </style>
 </head>
 <body>
 
-<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-    <h3 style="color:white; margin:0;">Bowls Scorer</h3>
-    <button onclick="toggleInstructions(true)" style="background:none; border:1px solid white; color:white; border-radius:20px; padding:4px 12px; font-size:0.7rem;">❓ Instructions</button>
-</div>
-
-<div id="inst-pop" class="overlay">
-    <div class="card" style="text-align:left;">
-        <h3 style="margin-top:0; color:var(--green);">How to Use</h3>
-        <ul style="font-size:0.85rem; padding-left:15px;">
-            <li><strong>Score:</strong> Tap Team A/B Wins and select shots.</li>
-            <li><strong>Edit:</strong> Long-press any score in the table to correct it.</li>
-            <li><strong>Sign:</strong> Tap the signature box at the end to sign full-screen.</li>
-            <li><strong>PDF:</strong> Snapshot captures all names, scores, and signatures.</li>
-        </ul>
-        <button onclick="toggleInstructions(false)" style="width:100%; background:var(--green); color:white; border:none; padding:10px; border-radius:8px;">Close</button>
-    </div>
-</div>
-
 <div id="sig-modal" class="sig-modal">
-    <h2 id="modal-title" style="margin:0; color:var(--green);">Sign Here</h2>
+    <h2 id="modal-title" style="margin:0; color:var(--green); font-size:1.2rem;">Sign Here</h2>
     <canvas id="modal-canvas"></canvas>
-    <div style="display:flex; gap:10px; margin-top:15px;">
-        <button onclick="modalPad.clear()" style="flex:1; padding:15px; background:#f44336; color:white; border:none; border-radius:10px;">Clear</button>
-        <button onclick="saveModalSig()" style="flex:1; padding:15px; background:var(--green); color:white; border:none; border-radius:10px;">Done</button>
+    <div style="display:flex; gap:10px; margin-top:10px;">
+        <button onclick="modalPad.clear()" style="flex:1; padding:12px; background:#f44336; color:white; border:none; border-radius:5px;">Clear</button>
+        <button onclick="saveModalSig()" style="flex:1; padding:12px; background:var(--green); color:white; border:none; border-radius:5px;">Done</button>
     </div>
 </div>
 
 <div id="shot-pop" class="overlay">
     <div class="card">
-        <h3 id="shot-title" style="margin:0;">Shots Scored</h3>
+        <h4 id="shot-title" style="margin:0;">Select Shots</h4>
         <div class="keypad-grid">
             <script>for(let i=1;i<=8;i++) document.write(`<button class="num-btn" onclick="submitShots(${i})">${i}</button>`);</script>
-            <button class="num-btn" onclick="closeShotPop()" style="background:#ccc; grid-column:span 3; font-size:1rem;">Cancel</button>
+            <button class="num-btn" onclick="closeShotPop()" style="background:#ccc; grid-column:span 3; font-size:0.9rem; padding:10px;">Cancel</button>
         </div>
     </div>
 </div>
 
-<div class="app-container" id="capture-area">
-    <div style="display:flex; gap:10px; margin-bottom:10px;">
-        <input type="date" id="match-date" style="flex:1; font-size:0.7rem;">
-        <input type="time" id="match-time" style="flex:1; font-size:0.7rem;">
+<div class="app-container" id="snapshot-target">
+    <div style="display:flex; justify-content:space-between; margin-bottom:5px; font-size:0.6rem; color:#666;">
+        <span id="display-date"></span>
+        <span id="display-match-info">Ends: <span id="ends-limit-val">21</span></span>
     </div>
 
-    <div id="setup-section" style="background:#eee; padding:10px; border-radius:10px; margin-bottom:10px;">
-        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
-            <div id="setupA">
+    <div id="setup-section" style="background:#eee; padding:8px; border-radius:8px; margin-bottom:8px;">
+        <div style="margin-bottom: 8px; text-align: center;">
+            <label style="font-size: 0.7rem; font-weight: bold;">Ends to Play:</label>
+            <select id="ends-select" onchange="updateEndsLimit()">
+                <option value="9">9 Ends</option>
+                <option value="12">12 Ends</option>
+                <option value="15">15 Ends</option>
+                <option value="18">18 Ends</option>
+                <option value="21" selected>21 Ends</option>
+            </select>
+        </div>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+            <div>
                 <strong>TEAM A</strong>
-                <input type="text" id="clubA" placeholder="Club" style="background:#fff9c4; font-weight:bold;">
-                <input type="text" id="pA4" placeholder="Skip">
-                <input type="text" id="pA3" placeholder="Third">
-                <input type="text" id="pA2" placeholder="Second">
-                <input type="text" id="pA1" placeholder="Lead">
+                <input type="text" id="clubA" class="club-input" placeholder="Club">
+                <input type="text" id="pA4" class="player-input" placeholder="Skip">
+                <input type="text" id="pA1" class="player-input" placeholder="Lead">
             </div>
-            <div id="setupB">
+            <div>
                 <strong>TEAM B</strong>
-                <input type="text" id="clubB" placeholder="Club" style="background:#fff9c4; font-weight:bold;">
-                <input type="text" id="pB4" placeholder="Skip">
-                <input type="text" id="pB3" placeholder="Third">
-                <input type="text" id="pB2" placeholder="Second">
-                <input type="text" id="pB1" placeholder="Lead">
+                <input type="text" id="clubB" class="club-input" placeholder="Club">
+                <input type="text" id="pB4" class="player-input" placeholder="Skip">
+                <input type="text" id="pB1" class="player-input" placeholder="Lead">
             </div>
         </div>
-        <button id="lock-btn" onclick="lockTeams()" style="width:100%; margin-top:10px; background:#333; color:white; border:none; padding:10px; border-radius:5px;">Confirm Lineups</button>
+        <button id="lock-btn" onclick="lockTeams()" style="width:100%; margin-top:8px; background:#333; color:white; border:none; padding:8px; border-radius:4px; font-size:0.8rem; cursor:pointer;">Confirm & Start</button>
     </div>
 
     <div class="scoreboard">
-        <div id="labelA" class="team-label">Club A</div>
+        <div id="labelA" class="team-label">TEAM A</div>
         <div class="score-val" id="totalA">0</div>
-        <div style="font-weight:bold; color:#ccc;">VS</div>
+        <div style="font-weight:bold; color:#ccc; font-size:0.8rem;">VS</div>
         <div class="score-val" id="totalB">0</div>
-        <div id="labelB" class="team-label">Club B</div>
+        <div id="labelB" class="team-label">TEAM B</div>
     </div>
 
-    <div class="btn-grid">
-        <button class="main-btn btn-a" onclick="handleWin('A')">A Win</button>
-        <button class="main-btn btn-b" onclick="handleWin('B')">B Win</button>
+    <div style="text-align:center; font-size:0.75rem; font-weight:bold; color:var(--green); margin-bottom:5px;" id="match-status">
+        End 1
     </div>
 
-    <table id="scorecard-table">
-        <thead><tr><th>End</th><th>Team A</th><th>Team B</th></tr></thead>
+    <div class="btn-grid" id="action-buttons">
+        <button class="main-btn" style="background:var(--blue);" onclick="handleWin('A')">A Wins End</button>
+        <button class="main-btn" style="background:var(--red);" onclick="handleWin('B')">B Wins End</button>
+    </div>
+
+    <table id="score-table">
+        <thead><tr><th>End</th><th>A</th><th>B</th></tr></thead>
         <tbody id="card-body"></tbody>
     </table>
 
-    <div id="signature-section" style="display:none; margin-top:15px; border-top:1px dashed #ccc; padding-top:10px;">
-        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
-            <div style="text-align:center;"><small id="sig-labelA">Sign A</small><canvas id="sig-a" onclick="openSigModal('A')"></canvas></div>
-            <div style="text-align:center;"><small id="sig-labelB">Sign B</small><canvas id="sig-b" onclick="openSigModal('B')"></canvas></div>
+    <div id="signature-area" style="display:none; margin-top:8px; border-top:1px dashed #ccc; padding-top:5px;">
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+            <div style="text-align:center;"><small id="sig-labelA" style="font-size:0.6rem;">Sign A</small><canvas id="sig-a" onclick="openSigModal('A')"></canvas></div>
+            <div style="text-align:center;"><small id="sig-labelB" style="font-size:0.6rem;">Sign B</small><canvas id="sig-b" onclick="openSigModal('B')"></canvas></div>
         </div>
-        <button onclick="shareSnapshot()" style="width:100%; margin-top:15px; background:var(--blue); color:white; border:none; padding:15px; border-radius:10px; font-weight:bold;">📤 Share Snapshot via WhatsApp</button>
+        <button id="share-btn" onclick="takeImageSnapshot()" style="width:100%; margin-top:10px; background:var(--green); color:white; border:none; padding:12px; border-radius:8px; font-weight:bold; font-size:0.9rem; cursor:pointer;">📸 Share Image to WhatsApp</button>
     </div>
 </div>
 
 <script>
     let scoreA = 0, scoreB = 0, currentEnd = 1, history = [], padA, padB, modalPad, activeSigTarget, editingIdx = null, pendingWinner = null;
-    const maxEnds = 21;
+    let endsLimit = 21;
 
     window.onload = () => {
-        document.getElementById('match-date').value = new Date().toISOString().split('T')[0];
+        document.getElementById('display-date').innerText = new Date().toLocaleDateString();
         padA = new SignaturePad(document.getElementById('sig-a'));
         padB = new SignaturePad(document.getElementById('sig-b'));
     };
 
-    function toggleInstructions(show) { document.getElementById('inst-pop').style.display = show ? 'flex' : 'none'; }
+    function updateEndsLimit() {
+        endsLimit = parseInt(document.getElementById('ends-select').value);
+        document.getElementById('ends-limit-val').innerText = endsLimit;
+    }
 
     function lockTeams() {
         const cA = document.getElementById('clubA').value || "Club A";
         const cB = document.getElementById('clubB').value || "Club B";
-        document.getElementById('labelA').innerHTML = `<strong>${cA}</strong><br><small>${document.getElementById('pA4').value}</small>`;
-        document.getElementById('labelB').innerHTML = `<strong>${cB}</strong><br><small>${document.getElementById('pB4').value}</small>`;
+        document.getElementById('labelA').innerHTML = `<strong>${cA}</strong>`;
+        document.getElementById('labelB').innerHTML = `<strong>${cB}</strong>`;
         document.getElementById('sig-labelA').innerText = cA + " Skip";
         document.getElementById('sig-labelB').innerText = cB + " Skip";
-        document.getElementById('lock-btn').style.display = 'none';
+        document.getElementById('setup-section').style.display = 'none';
+        render();
     }
 
     function handleWin(team) { pendingWinner = team; document.getElementById('shot-pop').style.display = 'flex'; }
@@ -178,17 +181,25 @@
     function render() {
         document.getElementById('totalA').innerText = scoreA;
         document.getElementById('totalB').innerText = scoreB;
-        if(currentEnd > maxEnds) document.getElementById('signature-section').style.display = 'block';
         
+        let isGameOver = (currentEnd > endsLimit) || (Math.abs(scoreA-scoreB) > (endsLimit - history.length)*8 && history.length > 0);
+        
+        if(isGameOver) {
+            document.getElementById('match-status').innerText = "Match Complete";
+            document.getElementById('signature-area').style.display = 'block';
+            document.getElementById('action-buttons').style.display = 'none';
+        } else {
+            document.getElementById('match-status').innerText = `End ${currentEnd} of ${endsLimit}`;
+        }
+
         const body = document.getElementById('card-body');
         body.innerHTML = "";
-        [...history].reverse().forEach((e, i) => {
-            const realIdx = history.length - 1 - i;
+        [...history].forEach((e, i) => {
             const row = document.createElement('tr');
             row.innerHTML = `<td>${e.end}</td><td>${e.sA||'-'}</td><td>${e.sB||'-'}</td>`;
-            let pressTimer;
-            row.onmousedown = row.ontouchstart = () => pressTimer = setTimeout(() => { pendingWinner = e.sA > 0 ? 'A' : 'B'; editingIdx = realIdx; document.getElementById('shot-pop').style.display = 'flex'; }, 800);
-            row.onmouseup = row.ontouchend = () => clearTimeout(pressTimer);
+            let timer;
+            row.ontouchstart = () => timer = setTimeout(() => { pendingWinner = e.sA>0?'A':'B'; editingIdx=i; document.getElementById('shot-pop').style.display='flex'; }, 800);
+            row.ontouchend = () => clearTimeout(timer);
             body.appendChild(row);
         });
     }
@@ -208,17 +219,22 @@
         document.getElementById('sig-modal').style.display = 'none';
     }
 
-    async function shareSnapshot() {
-        const element = document.getElementById('capture-area');
-        const opt = { 
-            margin: 5, filename: 'Snapshot.pdf', image: { type: 'jpeg', quality: 1.0 },
-            html2canvas: { scale: 3, scrollY: -window.scrollY }, 
-            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' } 
-        };
-        const blob = await html2pdf().set(opt).from(element).output('blob');
-        const file = new File([blob], 'Scorecard.pdf', { type: 'application/pdf' });
-        if(navigator.share) await navigator.share({ files: [file], title: 'Match Result' });
-        else html2pdf().set(opt).from(element).save();
+    async function takeImageSnapshot() {
+        const btn = document.getElementById('share-btn');
+        btn.innerText = "Creating Image...";
+        const canvas = await html2canvas(document.getElementById('snapshot-target'), { scale: 2, backgroundColor: "#f4f4f4" });
+        canvas.toBlob(async (blob) => {
+            const file = new File([blob], "Match_Scorecard.png", { type: "image/png" });
+            if (navigator.share) {
+                await navigator.share({ files: [file], title: 'Bowls Result' });
+            } else {
+                const link = document.createElement('a');
+                link.download = 'Scorecard.png';
+                link.href = canvas.toDataURL();
+                link.click();
+            }
+            btn.innerText = "📸 Share Image to WhatsApp";
+        }, 'image/png');
     }
 </script>
 </body>

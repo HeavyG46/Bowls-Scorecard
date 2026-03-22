@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Pro Bowls Scorer - Official Update</title>
+    <title>Pro Bowls - Championship Scorer</title>
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.0.0/dist/signature_pad.umd.min.js"></script>
@@ -52,15 +52,14 @@
 
 <div id="inst-pop" class="overlay">
     <div class="card" style="text-align: left;">
-        <h3 style="margin-top:0; color:var(--green); border-bottom: 2px solid #eee; padding-bottom: 5px;">🎳 Match Official Guide</h3>
+        <h3 style="margin-top:0; color:var(--green); border-bottom: 2px solid #eee; padding-bottom: 5px;">🎳 User Guide</h3>
         <div style="font-size: 0.85rem; line-height: 1.4;">
-            <p><strong>1. Setup:</strong> Select your Game Format (Singles to Fours) and Match Ends. Enter player names from <strong>Lead up to Skip</strong>.</p>
-            <p><strong>2. Scoring:</strong> Tap <em>A Win</em> or <em>B Win</em> to open the keypad. If the jack is burned, tap <strong>⚠️ Record Dead End</strong>; this records the event without affecting the score or end count.</p>
-            <p><strong>3. Editing:</strong> Made a mistake? <strong>Long-press (hold)</strong> any scored row in the table to re-open the keypad and correct the shots.</p>
-            <p><strong>4. Signatures:</strong> Tap the signature boxes to open a <strong>Full Screen</strong> signing area. Ensure both Skips sign before sharing.</p>
-            <p><strong>5. WhatsApp Share:</strong> Tapping <em>Share Result</em> creates a high-res image snapshot of the <u>entire</u> screen, including rosters and signatures.</p>
+            <p><strong>Format:</strong> Choose between traditional ends or "First to 21 Points".</p>
+            <p><strong>Scoring:</strong> Use <em>A Win</em> or <em>B Win</em>. For burned jacks, use <strong>Dead End</strong>.</p>
+            <p><strong>Editing:</strong> Long-press any score in the table to correct it. Recalculations are instant.</p>
+            <p><strong>Sign & Share:</strong> Once the target is met, the last end is recorded and signing boxes will appear.</p>
         </div>
-        <button onclick="toggleInstructions(false)" style="width:100%; background:var(--green); color:white; border:none; padding:12px; border-radius:8px; margin-top:10px; font-weight:bold;">Got it!</button>
+        <button onclick="toggleInstructions(false)" style="width:100%; background:var(--green); color:white; border:none; padding:12px; border-radius:8px; margin-top:10px; font-weight:bold;">Close</button>
     </div>
 </div>
 
@@ -101,31 +100,28 @@
                 </select>
             </div>
             <div>
-                <label style="font-size:0.7rem; font-weight:bold;">Ends:</label>
-                <select id="ends-select">
-                    <option value="9">9 Ends</option>
-                    <option value="12">12 Ends</option>
-                    <option value="15">15 Ends</option>
-                    <option value="18">18 Ends</option>
-                    <option value="21" selected>21 Ends</option>
+                <label style="font-size:0.7rem; font-weight:bold;">Game Type:</label>
+                <select id="game-type" onchange="toggleEndsSelector()">
+                    <option value="fixed">Fixed Ends</option>
+                    <option value="21">First to 21 Points</option>
                 </select>
             </div>
         </div>
 
+        <div id="ends-container" style="margin-bottom:10px; text-align:center;">
+            <label style="font-size:0.7rem; font-weight:bold;">Ends to Play:</label>
+            <select id="ends-select" style="width:50%;">
+                <option value="9">9 Ends</option><option value="12">12 Ends</option>
+                <option value="15">15 Ends</option><option value="18">18 Ends</option>
+                <option value="21" selected>21 Ends</option>
+            </select>
+        </div>
+
         <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
-            <div id="inputsA">
-                <strong>TEAM A</strong>
-                <input type="text" id="clubA" class="club-input" placeholder="Club Name">
-                <div id="playerFieldsA"></div>
-            </div>
-            <div id="inputsB">
-                <strong>TEAM B</strong>
-                <input type="text" id="clubB" class="club-input" placeholder="Club Name">
-                <div id="playerFieldsB"></div>
-            </div>
+            <div id="inputsA"><strong>TEAM A</strong><input type="text" id="clubA" class="club-input" placeholder="Club Name"><div id="playerFieldsA"></div></div>
+            <div id="inputsB"><strong>TEAM B</strong><input type="text" id="clubB" class="club-input" placeholder="Club Name"><div id="playerFieldsB"></div></div>
         </div>
         <button onclick="lockTeams()" id="lock-btn" style="width:100%; margin-top:10px; background:var(--green); color:white; border:none; padding:10px; border-radius:5px; font-weight:bold;">Start Match</button>
-        <p style="font-size:0.6rem; color:#666; text-align:center; margin-top:5px;">Check settings before starting. Names & Format lock upon start.</p>
     </div>
 
     <div id="roster-display"></div>
@@ -161,7 +157,7 @@
 </div>
 
 <script>
-    let scoreA = 0, scoreB = 0, currentEnd = 1, history = [], padA, padB, modalPad, activeSigTarget, editingIdx = null, pendingWinner = null, endsLimit = 21;
+    let scoreA = 0, scoreB = 0, currentEnd = 1, history = [], padA, padB, modalPad, activeSigTarget, editingIdx = null, pendingWinner = null, endsLimit = 21, isFirstTo21 = false;
     const labels = ["Lead", "Second", "Third", "Skip"];
 
     window.onload = () => {
@@ -172,6 +168,11 @@
     };
 
     function toggleInstructions(show) { document.getElementById('inst-pop').style.display = show ? 'flex' : 'none'; }
+    
+    function toggleEndsSelector() {
+        const type = document.getElementById('game-type').value;
+        document.getElementById('ends-container').style.display = type === '21' ? 'none' : 'block';
+    }
 
     function adjustPlayerInputs() {
         const count = parseInt(document.getElementById('game-format').value);
@@ -189,7 +190,8 @@
         const cA = document.getElementById('clubA').value || "Club A";
         const cB = document.getElementById('clubB').value || "Club B";
         const formatCount = parseInt(document.getElementById('game-format').value);
-        endsLimit = parseInt(document.getElementById('ends-select').value);
+        isFirstTo21 = document.getElementById('game-type').value === '21';
+        endsLimit = isFirstTo21 ? 999 : parseInt(document.getElementById('ends-select').value);
         
         const skipA = document.getElementById(`pA${formatCount-1}`).value || "Skip";
         const skipB = document.getElementById(`pB${formatCount-1}`).value || "Skip";
@@ -235,14 +237,18 @@
         document.getElementById('totalA').innerText = scoreA;
         document.getElementById('totalB').innerText = scoreB;
         
-        let isGameOver = (currentEnd > endsLimit) || (Math.abs(scoreA-scoreB) > (endsLimit - (currentEnd-1))*8 && history.length > 0);
-        
+        let isGameOver = false;
+        if(isFirstTo21) {
+            isGameOver = (scoreA >= 21 || scoreB >= 21);
+            document.getElementById('match-status').innerText = isGameOver ? "GOAL REACHED" : "Race to 21 Points";
+        } else {
+            isGameOver = (currentEnd > endsLimit) || (Math.abs(scoreA-scoreB) > (endsLimit - (currentEnd-1))*8 && history.length > 0);
+            document.getElementById('match-status').innerText = isGameOver ? "MATCH COMPLETE" : `End ${currentEnd} of ${endsLimit}`;
+        }
+
         if(isGameOver) {
-            document.getElementById('match-status').innerText = "MATCH COMPLETE";
             document.getElementById('signature-area').style.display = 'block';
             document.getElementById('action-buttons').style.display = 'none';
-        } else {
-            document.getElementById('match-status').innerText = `End ${currentEnd} of ${endsLimit}`;
         }
 
         const body = document.getElementById('card-body');
@@ -252,7 +258,6 @@
             const row = document.createElement('tr');
             if(e.isDead) row.className = "dead-row";
             row.innerHTML = `<td>${e.end}</td><td>${e.sA||'-'}</td><td>${e.sB||'-'}</td>`;
-            
             let timer;
             row.ontouchstart = () => timer = setTimeout(() => { 
                 if(!e.isDead) { pendingWinner = e.sA>0?'A':'B'; editingIdx=realIdx; document.getElementById('shot-pop').style.display='flex'; }
@@ -279,11 +284,11 @@
 
     async function takeImageSnapshot() {
         const btn = document.getElementById('share-btn');
-        btn.innerText = "Creating Snapshot...";
+        btn.innerText = "Processing...";
         const canvas = await html2canvas(document.getElementById('snapshot-target'), { scale: 2, backgroundColor: "#f4f4f4" });
         canvas.toBlob(async (blob) => {
-            const file = new File([blob], "Official_Scorecard.png", { type: "image/png" });
-            if (navigator.share) await navigator.share({ files: [file], title: 'Match Official Result' });
+            const file = new File([blob], "Match_Result.png", { type: "image/png" });
+            if (navigator.share) await navigator.share({ files: [file], title: 'Match Result' });
             btn.innerText = "📸 Share Result to WhatsApp";
         }, 'image/png');
     }

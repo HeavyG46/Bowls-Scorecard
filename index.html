@@ -10,7 +10,7 @@
     
     <style>
         :root { --green: #1b5e20; --blue: #0d47a1; --red: #b71c1c; --gold: #fbc02d; --white: #ffffff; --light: #f4f4f4; }
-        body { font-family: -apple-system, sans-serif; background: #222; margin: 0; padding: 0; color: #333; }
+        body { font-family: -apple-system, sans-serif; background: #222; margin: 0; padding: 0; color: #333; overflow-x: hidden; }
         .container { background: var(--light); max-width: 450px; min-height: 100vh; margin: auto; padding: 15px; box-sizing: border-box; }
         
         .card { background: var(--white); border-radius: 12px; padding: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-bottom: 15px; }
@@ -32,17 +32,24 @@
         .btn-dead { background: #607d8b; grid-column: span 2; padding: 10px; font-size: 0.8rem; }
         .btn-lock { background: var(--green); width: 100%; margin-top: 20px; box-shadow: 0 4px #0a2d10; }
 
+        /* Modals */
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 100; justify-content: center; align-items: center; flex-direction: column; }
-        .modal-content { background: white; padding: 20px; border-radius: 15px; width: 85%; text-align: center; }
+        .modal-content { background: white; padding: 20px; border-radius: 15px; width: 85%; text-align: center; position: relative; }
         .keypad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 15px; }
         .key { background: #f5f5f5; border: 1px solid #ddd; padding: 20px; font-size: 1.5rem; font-weight: bold; border-radius: 10px; }
         
+        /* Signature Overlay */
+        #sig-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #fff; z-index: 200; flex-direction: column; padding: 20px; box-sizing: border-box; }
+        .sig-canvas-large { border: 2px dashed #ccc; background: #fafafa; flex-grow: 1; width: 100%; touch-action: none; border-radius: 10px; }
+        
+        .sig-display { border: 1px solid #ddd; background: #eee; height: 80px; width: 100%; border-radius: 5px; display: flex; align-items: center; justify-content: center; cursor: pointer; position: relative; }
+        .sig-display img { max-height: 100%; max-width: 100%; }
+        .sig-placeholder { font-size: 0.7rem; color: #999; text-transform: uppercase; }
+
         table { width: 100%; border-collapse: collapse; background: white; margin-top: 20px; border-radius: 8px; overflow: hidden; font-size: 0.9rem; }
         th { background: #444; color: white; padding: 10px; font-size: 0.75rem; }
         td { padding: 12px; text-align: center; border-bottom: 1px solid #eee; font-weight: bold; }
         .row-dead { background: #fff3e0; color: #e65100; font-style: italic; }
-
-        .sig-container { background: white; border: 1px solid #ccc; border-radius: 5px; height: 100px; width: 100%; touch-action: none; }
     </style>
 </head>
 <body>
@@ -52,81 +59,44 @@
     <div id="view-setup">
         <div class="card">
             <h2>Match Setup</h2>
-            
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-                <div>
-                    <label>Green</label>
-                    <select id="in-green">
-                        <option value="A">Green A</option>
-                        <option value="B">Green B</option>
-                        <option value="C">Green C</option>
-                    </select>
-                </div>
-                <div>
-                    <label>Rink</label>
-                    <input type="number" id="in-rink" placeholder="Rink #">
-                </div>
+                <div><label>Green</label><select id="in-green"><option>A</option><option>B</option><option>C</option></select></div>
+                <div><label>Rink</label><input type="number" id="in-rink" placeholder="Rink #"></div>
             </div>
             
-            <label>Game Format</label>
+            <label>Format</label>
             <select id="in-format" onchange="updatePlayerInputs()">
-                <option value="1">Singles</option>
-                <option value="2">Pairs</option>
-                <option value="3-2">2 Bowl Trips</option>
-                <option value="3-3">3 Bowl Trips</option>
-                <option value="4" selected>Fours</option>
+                <option value="1">Singles</option><option value="2">Pairs</option><option value="4" selected>Fours</option>
             </select>
 
             <label>Win Condition</label>
             <select id="in-mode" onchange="toggleModeSelect()">
-                <option value="ends">Fixed Ends</option>
-                <option value="points">First to 21 Points</option>
+                <option value="ends">Fixed Ends</option><option value="points">First to 21 Points</option>
             </select>
 
             <div id="ends-select-wrap">
-                <label>Number of Ends</label>
-                <select id="in-target-ends">
-                    <option value="10" selected>10 Ends</option>
-                    <option value="12">12 Ends</option>
-                    <option value="15">15 Ends</option>
-                    <option value="18">18 Ends</option>
-                    <option value="21">21 Ends</option>
-                </select>
+                <label>Ends</label>
+                <select id="in-target-ends"><option value="10" selected>10 Ends</option><option value="21">21 Ends</option></select>
             </div>
 
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top:15px;">
-                <div>
-                    <strong style="color:var(--blue)">TEAM A</strong>
-                    <input type="text" id="in-clubA" class="club-input" placeholder="Club Name">
-                    <div id="area-playersA"></div>
-                </div>
-                <div>
-                    <strong style="color:var(--red)">TEAM B</strong>
-                    <input type="text" id="in-clubB" class="club-input" placeholder="Club Name">
-                    <div id="area-playersB"></div>
-                </div>
+                <div><strong style="color:var(--blue)">TEAM A</strong><input id="in-clubA" class="club-input" placeholder="Club"><div id="area-playersA"></div></div>
+                <div><strong style="color:var(--red)">TEAM B</strong><input id="in-clubB" class="club-input" placeholder="Club"><div id="area-playersB"></div></div>
             </div>
-            
             <button class="btn btn-lock" onclick="startMatch()">Start Scoring</button>
         </div>
     </div>
 
     <div id="view-match" style="display:none;">
-        <div id="meta-info" style="text-align:center; font-size:0.7rem; color:#666; margin-bottom:8px; font-weight:bold; letter-spacing: 0.5px;"></div>
+        <div id="meta-info" style="text-align:center; font-size:0.7rem; color:#666; margin-bottom:8px; font-weight:bold;"></div>
         
         <div class="board">
-            <div class="score-box">
-                <div class="team-name" id="label-A">TEAM A</div>
-                <p class="score-num" id="pts-A">0</p>
-            </div>
+            <div class="score-box"><div class="team-name" id="label-A">TEAM A</div><p class="score-num" id="pts-A">0</p></div>
             <div style="font-weight:bold; color:#bbb;">VS</div>
-            <div class="score-box">
-                <div class="team-name" id="label-B">TEAM B</div>
-                <p class="score-num" id="pts-B">0</p>
-            </div>
+            <div class="score-box"><div class="team-name" id="label-B">TEAM B</div><p class="score-num" id="pts-B">0</p></div>
         </div>
 
-        <div id="status-text" style="text-align:center; margin-top:12px; font-weight:bold; color:var(--green); font-size: 1.1rem;">End 1</div>
+        <div id="status-text" style="text-align:center; margin-top:12px; font-weight:bold; color:var(--green);">End 1</div>
 
         <div class="btn-row" id="scoring-controls">
             <button class="btn btn-a" onclick="showKeypad('A')">A Win</button>
@@ -135,14 +105,20 @@
         </div>
 
         <table id="score-table">
-            <thead><tr><th>End</th><th>Team A</th><th>Team B</th></tr></thead>
+            <thead><tr><th>End</th><th>A</th><th>B</th></tr></thead>
             <tbody id="history-table"></tbody>
         </table>
 
         <div id="final-actions" style="display:none; margin-top:20px; border-top:2px dashed #ccc; padding-top:15px;">
             <div style="display:flex; gap:10px;">
-                <div style="flex:1; text-align:center;"><small id="name-skipA" style="font-weight:bold; display:block; margin-bottom:5px;">Skip A</small><canvas id="pad-a" class="sig-container"></canvas></div>
-                <div style="flex:1; text-align:center;"><small id="name-skipB" style="font-weight:bold; display:block; margin-bottom:5px;">Skip B</small><canvas id="pad-b" class="sig-container"></canvas></div>
+                <div style="flex:1; text-align:center;">
+                    <small id="name-skipA" style="font-weight:bold; display:block; margin-bottom:5px;">Skip A</small>
+                    <div class="sig-display" onclick="openSignature('A')"><div id="disp-A" class="sig-placeholder">Tap to Sign</div></div>
+                </div>
+                <div style="flex:1; text-align:center;">
+                    <small id="name-skipB" style="font-weight:bold; display:block; margin-bottom:5px;">Skip B</small>
+                    <div class="sig-display" onclick="openSignature('B')"><div id="disp-B" class="sig-placeholder">Tap to Sign</div></div>
+                </div>
             </div>
             <button class="btn btn-lock" style="background:var(--green); margin-top:20px;" onclick="shareResult()">Share Scorecard</button>
             <button class="btn" style="background:#555; width:100%; margin-top:10px;" onclick="location.reload()">Reset</button>
@@ -150,17 +126,26 @@
     </div>
 </div>
 
+<div id="sig-overlay">
+    <h3 id="sig-title" style="text-align:center; color:var(--green);">Skip Signature</h3>
+    <canvas id="large-canvas" class="sig-canvas-large"></canvas>
+    <div class="btn-row" style="margin-top:20px;">
+        <button class="btn" style="background:#999;" onclick="pad.clear()">Clear</button>
+        <button class="btn" style="background:var(--green);" onclick="saveSignature()">Confirm</button>
+    </div>
+</div>
+
 <div id="modal-keypad" class="modal">
     <div class="modal-content">
-        <h3 id="keypad-title">Shots for A</h3>
+        <h3 id="keypad-title">Shots</h3>
         <div class="keypad" id="keypad-grid"></div>
-        <button onclick="hideKeypad()" style="margin-top:20px; width:100%; padding:12px; border:none; border-radius:8px; background:#ddd;">Cancel</button>
+        <button onclick="hideKeypad()" style="margin-top:20px; width:100%; padding:12px; border:none; background:#ddd;">Cancel</button>
     </div>
 </div>
 
 <script>
     let match = { scoreA: 0, scoreB: 0, currentEnd: 1, history: [], mode: 'ends', target: 21 };
-    let sigA, sigB;
+    let pad, activeSigSide;
 
     function toggleModeSelect() {
         const mode = document.getElementById('in-mode').value;
@@ -169,33 +154,21 @@
 
     function updatePlayerInputs() {
         const fmt = document.getElementById('in-format').value;
-        const count = fmt.includes('-') ? parseInt(fmt.split('-')[0]) : parseInt(fmt);
-        const roles = ["Lead", "Second", "Third", "Skip"];
+        const count = parseInt(fmt);
         const areaA = document.getElementById('area-playersA');
         const areaB = document.getElementById('area-playersB');
         areaA.innerHTML = ""; areaB.innerHTML = "";
         for (let i = 0; i < count; i++) {
-            const label = (count === 1) ? "Player" : roles[i === count-1 ? 3 : i];
-            areaA.innerHTML += `<input type="text" class="p-name-a" placeholder="${label}">`;
-            areaB.innerHTML += `<input type="text" class="p-name-b" placeholder="${label}">`;
+            areaA.innerHTML += `<input type="text" class="p-name-a" placeholder="Player ${i+1}">`;
+            areaB.innerHTML += `<input type="text" class="p-name-b" placeholder="Player ${i+1}">`;
         }
     }
 
     function startMatch() {
-        const clubA = document.getElementById('in-clubA').value || "Team A";
-        const clubB = document.getElementById('in-clubB').value || "Team B";
-        const green = document.getElementById('in-green').value;
-        const rink = document.getElementById('in-rink').value || "1";
-        const format = document.getElementById('in-format').selectedOptions[0].text;
-        
+        document.getElementById('label-A').innerText = document.getElementById('in-clubA').value || "Team A";
+        document.getElementById('label-B').innerText = document.getElementById('in-clubB').value || "Team B";
         match.mode = document.getElementById('in-mode').value;
         match.target = (match.mode === 'points') ? 21 : parseInt(document.getElementById('in-target-ends').value);
-
-        document.getElementById('label-A').innerText = clubA;
-        document.getElementById('label-B').innerText = clubB;
-        
-        const modeText = (match.mode === 'points') ? "First to 21 Points" : `${match.target} Ends`;
-        document.getElementById('meta-info').innerText = `GREEN ${green} | RINK ${rink} | ${format} | ${modeText}`;
         
         const namesA = document.querySelectorAll('.p-name-a');
         const namesB = document.querySelectorAll('.p-name-b');
@@ -205,20 +178,42 @@
         document.getElementById('view-setup').style.display = 'none';
         document.getElementById('view-match').style.display = 'block';
         
-        sigA = new SignaturePad(document.getElementById('pad-a'));
-        sigB = new SignaturePad(document.getElementById('pad-b'));
-        
+        const canvas = document.getElementById('large-canvas');
+        pad = new SignaturePad(canvas);
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
         updateBoard();
+    }
+
+    function resizeCanvas() {
+        const canvas = document.getElementById('large-canvas');
+        const ratio = Math.max(window.devicePixelRatio || 1, 1);
+        canvas.width = canvas.offsetWidth * ratio;
+        canvas.height = canvas.offsetHeight * ratio;
+        canvas.getContext("2d").scale(ratio, ratio);
+        pad.clear();
+    }
+
+    function openSignature(side) {
+        activeSigSide = side;
+        document.getElementById('sig-title').innerText = "Signature: " + (side === 'A' ? "Team A" : "Team B");
+        document.getElementById('sig-overlay').style.display = 'flex';
+        resizeCanvas();
+    }
+
+    function saveSignature() {
+        if (pad.isEmpty()) return alert("Please sign first");
+        const data = pad.toDataURL();
+        const display = document.getElementById('disp-' + activeSigSide);
+        display.innerHTML = `<img src="${data}">`;
+        document.getElementById('sig-overlay').style.display = 'none';
     }
 
     function showKeypad(team) {
         match.activeWinner = team;
-        document.getElementById('keypad-title').innerText = "Shots for " + (team === 'A' ? "Team A" : "Team B");
-        const format = document.getElementById('in-format').value;
-        let max = (format === '3-2') ? 6 : (format === '3-3') ? 9 : 8;
         const grid = document.getElementById('keypad-grid');
         grid.innerHTML = "";
-        for (let i = 1; i <= max; i++) {
+        for (let i = 1; i <= 8; i++) {
             grid.innerHTML += `<button class="key" onclick="processScore(${i})">${i}</button>`;
         }
         document.getElementById('modal-keypad').style.display = 'flex';
@@ -230,10 +225,8 @@
         const sA = match.activeWinner === 'A' ? shots : 0;
         const sB = match.activeWinner === 'B' ? shots : 0;
         match.history.push({ end: match.currentEnd++, a: sA, b: sB, dead: false });
-        match.scoreA += sA;
-        match.scoreB += sB;
-        hideKeypad();
-        updateBoard();
+        match.scoreA += sA; match.scoreB += sB;
+        hideKeypad(); updateBoard();
     }
 
     function addDeadEnd() {
@@ -244,51 +237,29 @@
     function updateBoard() {
         document.getElementById('pts-A').innerText = match.scoreA;
         document.getElementById('pts-B').innerText = match.scoreB;
-        
-        let isGameOver = false;
-        if (match.mode === 'points') {
-            isGameOver = (match.scoreA >= 21 || match.scoreB >= 21);
-            document.getElementById('status-text').innerText = isGameOver ? "🏆 MATCH COMPLETE" : `End ${match.currentEnd}`;
-        } else {
-            isGameOver = (match.currentEnd > match.target);
-            document.getElementById('status-text').innerText = isGameOver ? "🏆 MATCH COMPLETE" : `End ${match.currentEnd} of ${match.target}`;
-        }
-        
+        let isGameOver = (match.mode === 'points') ? (match.scoreA >= 21 || match.scoreB >= 21) : (match.currentEnd > match.target);
         if (isGameOver) {
             document.getElementById('scoring-controls').style.display = 'none';
             document.getElementById('final-actions').style.display = 'block';
+            document.getElementById('status-text').innerText = "🏆 MATCH COMPLETE";
+        } else {
+            document.getElementById('status-text').innerText = `End ${match.currentEnd}`;
         }
-
         const table = document.getElementById('history-table');
         table.innerHTML = "";
         [...match.history].reverse().forEach(row => {
-            const tr = document.createElement('tr');
-            if (row.dead) tr.className = 'row-dead';
-            tr.innerHTML = `<td>${row.end}</td><td>${row.a || '-'}</td><td>${row.b || '-'}</td>`;
-            table.appendChild(tr);
+            table.innerHTML += `<tr class="${row.dead?'row-dead':''}"><td>${row.end}</td><td>${row.a||'-'}</td><td>${row.b||'-'}</td></tr>`;
         });
     }
 
     async function shareResult() {
-        const btn = document.querySelector('#final-actions .btn-lock');
-        btn.innerText = "Processing...";
         const canvas = await html2canvas(document.getElementById('app-canvas'));
         canvas.toBlob(blob => {
             const file = new File([blob], "Bowls_Result.png", { type: "image/png" });
-            if (navigator.share) {
-                navigator.share({ files: [file], title: 'Bowls Result' }).then(() => btn.innerText = "Share Scorecard");
-            } else {
-                const link = document.createElement('a');
-                link.download = 'Scorecard.png';
-                link.href = canvas.toDataURL();
-                link.click();
-                btn.innerText = "Share Scorecard";
-            }
+            if (navigator.share) navigator.share({ files: [file] });
         });
     }
-
     updatePlayerInputs();
 </script>
-
 </body>
 </html>

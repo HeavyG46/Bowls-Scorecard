@@ -9,223 +9,286 @@
     <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.0.0/dist/signature_pad.umd.min.js"></script>
     
     <style>
-        :root { --green: #1b5e20; --blue: #0d47a1; --red: #b71c1c; --light: #f4f4f4; }
-        body { font-family: sans-serif; background: var(--green); margin: 0; padding: 10px; }
-        .app-container { background: var(--light); max-width: 400px; margin: auto; border-radius: 12px; padding: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
+        :root { --green: #1b5e20; --blue: #0d47a1; --red: #b71c1c; --gold: #fbc02d; --white: #ffffff; --light: #f4f4f4; }
+        body { font-family: -apple-system, sans-serif; background: #222; margin: 0; padding: 0; color: #333; }
+        .container { background: var(--light); max-width: 450px; min-height: 100vh; margin: auto; padding: 15px; box-sizing: border-box; }
         
-        input, select { padding: 10px; margin: 5px 0; border: 1px solid #ccc; border-radius: 6px; width: 100%; box-sizing: border-box; font-size: 16px; }
-        .club-input { background: #fff9c4; font-weight: bold; }
+        .card { background: var(--white); border-radius: 12px; padding: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-bottom: 15px; }
+        h2 { color: var(--green); text-align: center; margin-top: 0; font-size: 1.4rem; border-bottom: 2px solid var(--green); padding-bottom: 10px; }
         
-        .scoreboard { display: flex; justify-content: space-between; align-items: center; background: #fff; padding: 15px; border-radius: 8px; margin: 10px 0; border-bottom: 4px solid #ddd; }
-        .score-val { font-size: 3rem; font-weight: 900; color: var(--green); }
-        .team-label { font-size: 0.8rem; text-align: center; width: 40%; font-weight: bold; }
+        label { font-size: 0.7rem; font-weight: bold; text-transform: uppercase; color: #666; display: block; margin-top: 10px; }
+        input, select { width: 100%; padding: 12px; margin: 5px 0; border: 1px solid #ccc; border-radius: 8px; font-size: 16px; box-sizing: border-box; }
+        .club-input { background: #fffde7; border: 1px solid var(--gold); font-weight: bold; }
 
-        .overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 999; justify-content: center; align-items: center; flex-direction: column; }
-        .card { background: white; padding: 20px; border-radius: 15px; width: 80%; text-align: center; }
-        
-        .keypad-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 15px; }
-        .num-btn { background: #eee; border: 1px solid #ccc; padding: 20px; font-size: 1.5rem; font-weight: bold; border-radius: 10px; }
+        .board { display: flex; justify-content: space-around; align-items: center; background: var(--white); padding: 15px; border-radius: 10px; border-bottom: 5px solid #ddd; }
+        .score-box { text-align: center; width: 40%; }
+        .score-num { font-size: 3.5rem; font-weight: 900; color: var(--green); margin: 0; }
+        .team-name { font-size: 0.85rem; font-weight: bold; line-height: 1.2; height: 2.4em; display: flex; align-items: center; justify-content: center; }
 
-        .btn-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
-        .main-btn { padding: 20px; border: none; border-radius: 8px; font-weight: bold; color: white; font-size: 1.1rem; }
+        .btn-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px; }
+        .btn { padding: 18px; border: none; border-radius: 8px; font-weight: bold; font-size: 1rem; color: white; cursor: pointer; text-transform: uppercase; }
+        .btn-a { background: var(--blue); }
+        .btn-b { background: var(--red); }
+        .btn-dead { background: #607d8b; grid-column: span 2; padding: 10px; font-size: 0.8rem; }
+        .btn-lock { background: var(--green); width: 100%; margin-top: 20px; box-shadow: 0 4px #0a2d10; }
+
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 100; justify-content: center; align-items: center; flex-direction: column; }
+        .modal-content { background: white; padding: 20px; border-radius: 15px; width: 85%; text-align: center; }
+        .keypad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 15px; }
+        .key { background: #f5f5f5; border: 1px solid #ddd; padding: 20px; font-size: 1.5rem; font-weight: bold; border-radius: 10px; }
         
-        table { width: 100%; border-collapse: collapse; background: white; margin-top: 15px; font-size: 0.9rem; }
-        th, td { border: 1px solid #ddd; padding: 10px; text-align: center; }
-        
-        .sig-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; z-index: 1000; flex-direction: column; padding: 20px; box-sizing: border-box; }
-        canvas { border: 1px solid #aaa; background: #fff; width: 100%; height: 80px; border-radius: 5px; touch-action: none; }
+        table { width: 100%; border-collapse: collapse; background: white; margin-top: 20px; border-radius: 8px; overflow: hidden; font-size: 0.9rem; }
+        th { background: #444; color: white; padding: 10px; font-size: 0.75rem; }
+        td { padding: 12px; text-align: center; border-bottom: 1px solid #eee; font-weight: bold; }
+        .row-dead { background: #fff3e0; color: #e65100; font-style: italic; }
+
+        .sig-container { background: white; border: 1px solid #ccc; border-radius: 5px; height: 100px; width: 100%; touch-action: none; }
     </style>
 </head>
 <body>
 
-<div class="app-container" id="snapshot-target">
-    <h2 style="text-align:center; color:var(--green); margin-top:0;">Scorecard</h2>
-
-    <div id="setup-section">
-        <input type="text" id="green-name" placeholder="Green Name (e.g. Durban)">
-        <input type="text" id="rink-num" placeholder="Rink Number">
-        
-        <label style="font-size: 0.7rem; font-weight: bold;">GAME FORMAT</label>
-        <select id="game-format" onchange="adjustPlayerInputs()">
-            <option value="1">Singles</option>
-            <option value="2">Pairs</option>
-            <option value="3-2">2 Bowl Trips</option>
-            <option value="3-3">3 Bowl Trips</option>
-            <option value="4" selected>Fours</option>
-        </select>
-
-        <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px;">
-            <div>
-                <strong>TEAM A</strong>
-                <input type="text" id="clubA" class="club-input" placeholder="Club">
-                <div id="playerFieldsA"></div>
+<div class="container" id="app-canvas">
+    
+    <div id="view-setup">
+        <div class="card">
+            <h2>Match Setup</h2>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                <div>
+                    <label>Green</label>
+                    <select id="in-green">
+                        <option value="A">Green A</option>
+                        <option value="B">Green B</option>
+                        <option value="C">Green C</option>
+                    </select>
+                </div>
+                <div>
+                    <label>Rink</label>
+                    <input type="number" id="in-rink" placeholder="Rink #">
+                </div>
             </div>
-            <div>
-                <strong>TEAM B</strong>
-                <input type="text" id="clubB" class="club-input" placeholder="Club">
-                <div id="playerFieldsB"></div>
+            
+            <label>Game Format</label>
+            <select id="in-format" onchange="updatePlayerInputs()">
+                <option value="1">Singles</option>
+                <option value="2">Pairs</option>
+                <option value="3-2">2 Bowl Trips</option>
+                <option value="3-3">3 Bowl Trips</option>
+                <option value="4" selected>Fours</option>
+            </select>
+
+            <label>Win Condition</label>
+            <select id="in-mode" onchange="toggleModeSelect()">
+                <option value="ends">Fixed Ends</option>
+                <option value="points">First to 21 Points</option>
+            </select>
+
+            <div id="ends-select-wrap">
+                <label>Number of Ends</label>
+                <select id="in-target-ends">
+                    <option value="10" selected>10 Ends</option>
+                    <option value="12">12 Ends</option>
+                    <option value="15">15 Ends</option>
+                    <option value="18">18 Ends</option>
+                    <option value="21">21 Ends</option>
+                </select>
             </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top:15px;">
+                <div>
+                    <strong style="color:var(--blue)">TEAM A</strong>
+                    <input type="text" id="in-clubA" class="club-input" placeholder="Club Name">
+                    <div id="area-playersA"></div>
+                </div>
+                <div>
+                    <strong style="color:var(--red)">TEAM B</strong>
+                    <input type="text" id="in-clubB" class="club-input" placeholder="Club Name">
+                    <div id="area-playersB"></div>
+                </div>
+            </div>
+            
+            <button class="btn btn-lock" onclick="startMatch()">Start Scoring</button>
         </div>
-        
-        <button onclick="lockTeams()" style="width:100%; background:var(--green); color:white; padding:20px; border:none; border-radius:8px; font-weight:bold; margin-top:15px; font-size:1.1rem;">LOCK & START GAME</button>
     </div>
 
-    <div id="game-section" style="display:none;">
-        <div id="match-info" style="font-size:0.7rem; text-align:center; margin-bottom:10px; font-weight:bold; color:#555;"></div>
+    <div id="view-match" style="display:none;">
+        <div id="meta-info" style="text-align:center; font-size:0.7rem; color:#666; margin-bottom:8px; font-weight:bold; letter-spacing: 0.5px;"></div>
         
-        <div class="scoreboard">
-            <div id="display-labelA" class="team-label">TEAM A</div>
-            <div class="score-val" id="totalA">0</div>
-            <div style="font-weight:bold; color:#ccc;">VS</div>
-            <div class="score-val" id="totalB">0</div>
-            <div id="display-labelB" class="team-label">TEAM B</div>
+        <div class="board">
+            <div class="score-box">
+                <div class="team-name" id="label-A">TEAM A</div>
+                <p class="score-num" id="pts-A">0</p>
+            </div>
+            <div style="font-weight:bold; color:#bbb;">VS</div>
+            <div class="score-box">
+                <div class="team-name" id="label-B">TEAM B</div>
+                <p class="score-num" id="pts-B">0</p>
+            </div>
         </div>
 
-        <div id="match-status" style="text-align:center; font-weight:bold; margin-bottom:10px; color:var(--green);">End 1</div>
+        <div id="status-text" style="text-align:center; margin-top:12px; font-weight:bold; color:var(--green); font-size: 1.1rem;">End 1</div>
 
-        <div class="btn-grid">
-            <button class="main-btn" style="background:var(--blue);" onclick="openKeypad('A')">A WIN</button>
-            <button class="main-btn" style="background:var(--red);" onclick="openKeypad('B')">B WIN</button>
-            <button onclick="recordDead()" style="grid-column: span 2; padding:10px; background:#666; color:white; border:none; border-radius:5px;">DEAD END</button>
+        <div class="btn-row" id="scoring-controls">
+            <button class="btn btn-a" onclick="showKeypad('A')">A Win</button>
+            <button class="btn btn-b" onclick="showKeypad('B')">B Win</button>
+            <button class="btn btn-dead" onclick="addDeadEnd()">Record Dead End</button>
         </div>
 
-        <table>
+        <table id="score-table">
             <thead><tr><th>End</th><th>Team A</th><th>Team B</th></tr></thead>
-            <tbody id="card-body"></tbody>
+            <tbody id="history-table"></tbody>
         </table>
-        
-        <div id="sig-section" style="display:none; margin-top:20px; border-top:2px solid #ccc; padding-top:10px;">
+
+        <div id="final-actions" style="display:none; margin-top:20px; border-top:2px dashed #ccc; padding-top:15px;">
             <div style="display:flex; gap:10px;">
-                <div style="width:50%; text-align:center;"><small>Skip A</small><canvas id="sig-a" onclick="openSigModal('A')"></canvas></div>
-                <div style="width:50%; text-align:center;"><small>Skip B</small><canvas id="sig-b" onclick="openSigModal('B')"></canvas></div>
+                <div style="flex:1; text-align:center;"><small id="name-skipA" style="font-weight:bold; display:block; margin-bottom:5px;">Skip A</small><canvas id="pad-a" class="sig-container"></canvas></div>
+                <div style="flex:1; text-align:center;"><small id="name-skipB" style="font-weight:bold; display:block; margin-bottom:5px;">Skip B</small><canvas id="pad-b" class="sig-container"></canvas></div>
             </div>
-            <button onclick="takeImageSnapshot()" style="width:100%; background:var(--green); color:white; padding:15px; border:none; border-radius:8px; font-weight:bold; margin-top:15px;">SHARE TO WHATSAPP</button>
+            <button class="btn btn-lock" style="background:var(--green); margin-top:20px;" onclick="shareResult()">Share Scorecard</button>
+            <button class="btn" style="background:#555; width:100%; margin-top:10px;" onclick="location.reload()">Reset</button>
         </div>
     </div>
 </div>
 
-<div id="shot-pop" class="overlay">
-    <div class="card">
-        <h3>Shots for Team <span id="winning-team-letter"></span></h3>
-        <div id="keypad-area" class="keypad-grid"></div>
-        <button onclick="document.getElementById('shot-pop').style.display='none'" style="margin-top:20px; width:100%; padding:10px;">Cancel</button>
-    </div>
-</div>
-
-<div id="sig-modal" class="sig-modal">
-    <h2 style="text-align:center;">Sign Here</h2>
-    <canvas id="modal-canvas" style="height: 300px;"></canvas>
-    <div style="display:flex; gap:10px; margin-top:20px;">
-        <button onclick="modalPad.clear()" style="flex:1; padding:20px; background:#f44336; color:white; border:none; border-radius:10px;">Clear</button>
-        <button onclick="saveSig()" style="flex:1; padding:20px; background:var(--green); color:white; border:none; border-radius:10px;">Done</button>
+<div id="modal-keypad" class="modal">
+    <div class="modal-content">
+        <h3 id="keypad-title">Shots for A</h3>
+        <div class="keypad" id="keypad-grid"></div>
+        <button onclick="hideKeypad()" style="margin-top:20px; width:100%; padding:12px; border:none; border-radius:8px; background:#ddd;">Cancel</button>
     </div>
 </div>
 
 <script>
-    let scoreA = 0, scoreB = 0, currentEnd = 1, history = [], winner = null, modalPad, activeSig;
-    const labels = ["Lead", "Second", "Third", "Skip"];
+    let match = { scoreA: 0, scoreB: 0, currentEnd: 1, history: [], mode: 'ends', target: 21 };
+    let sigA, sigB;
 
-    function adjustPlayerInputs() {
-        const val = document.getElementById('game-format').value;
-        const count = val.includes('-') ? parseInt(val.split('-')[0]) : parseInt(val);
-        const containerA = document.getElementById('playerFieldsA'), containerB = document.getElementById('playerFieldsB');
-        containerA.innerHTML = ""; containerB.innerHTML = "";
-        
+    function toggleModeSelect() {
+        const mode = document.getElementById('in-mode').value;
+        document.getElementById('ends-select-wrap').style.display = (mode === 'points') ? 'none' : 'block';
+    }
+
+    function updatePlayerInputs() {
+        const fmt = document.getElementById('in-format').value;
+        const count = fmt.includes('-') ? parseInt(fmt.split('-')[0]) : parseInt(fmt);
+        const roles = ["Lead", "Second", "Third", "Skip"];
+        const areaA = document.getElementById('area-playersA');
+        const areaB = document.getElementById('area-playersB');
+        areaA.innerHTML = ""; areaB.innerHTML = "";
         for (let i = 0; i < count; i++) {
-            let role = count === 1 ? "Player" : labels[i];
-            containerA.innerHTML += `<input type="text" class="name-a" placeholder="${role}">`;
-            containerB.innerHTML += `<input type="text" class="name-b" placeholder="${role}">`;
+            const label = (count === 1) ? "Player" : roles[i === count-1 ? 3 : i];
+            areaA.innerHTML += `<input type="text" class="p-name-a" placeholder="${label}">`;
+            areaB.innerHTML += `<input type="text" class="p-name-b" placeholder="${label}">`;
         }
     }
 
-    function lockTeams() {
-        const cA = document.getElementById('clubA').value || "Club A";
-        const cB = document.getElementById('clubB').value || "Club B";
-        const green = document.getElementById('green-name').value || "N/A";
-        const rink = document.getElementById('rink-num').value || "N/A";
+    function startMatch() {
+        const clubA = document.getElementById('in-clubA').value || "Team A";
+        const clubB = document.getElementById('in-clubB').value || "Team B";
+        const green = document.getElementById('in-green').value;
+        const rink = document.getElementById('in-rink').value || "1";
+        const format = document.getElementById('in-format').selectedOptions[0].text;
         
-        document.getElementById('match-info').innerText = `${green} | Rink ${rink} | ${document.getElementById('game-format').selectedOptions[0].text}`;
-        document.getElementById('display-labelA').innerText = cA;
-        document.getElementById('display-labelB').innerText = cB;
+        match.mode = document.getElementById('in-mode').value;
+        match.target = (match.mode === 'points') ? 21 : parseInt(document.getElementById('in-target-ends').value);
+
+        document.getElementById('label-A').innerText = clubA;
+        document.getElementById('label-B').innerText = clubB;
         
-        document.getElementById('setup-section').style.display = 'none';
-        document.getElementById('game-section').style.display = 'block';
+        const modeText = (match.mode === 'points') ? "First to 21 Points" : `${match.target} Ends`;
+        document.getElementById('meta-info').innerText = `GREEN ${green} | RINK ${rink} | ${format} | ${modeText}`;
+        
+        const namesA = document.querySelectorAll('.p-name-a');
+        const namesB = document.querySelectorAll('.p-name-b');
+        document.getElementById('name-skipA').innerText = namesA[namesA.length-1].value || "Skip A";
+        document.getElementById('name-skipB').innerText = namesB[namesB.length-1].value || "Skip B";
+
+        document.getElementById('view-setup').style.display = 'none';
+        document.getElementById('view-match').style.display = 'block';
+        
+        sigA = new SignaturePad(document.getElementById('pad-a'));
+        sigB = new SignaturePad(document.getElementById('pad-b'));
+        
+        updateBoard();
     }
 
-    function openKeypad(team) {
-        winner = team;
-        document.getElementById('winning-team-letter').innerText = team;
-        const format = document.getElementById('game-format').value;
+    function showKeypad(team) {
+        match.activeWinner = team;
+        document.getElementById('keypad-title').innerText = "Shots for " + (team === 'A' ? "Team A" : "Team B");
+        const format = document.getElementById('in-format').value;
         let max = (format === '3-2') ? 6 : (format === '3-3') ? 9 : 8;
-        
-        const area = document.getElementById('keypad-area');
-        area.innerHTML = "";
+        const grid = document.getElementById('keypad-grid');
+        grid.innerHTML = "";
         for (let i = 1; i <= max; i++) {
-            area.innerHTML += `<button class="num-btn" onclick="addScore(${i})">${i}</button>`;
+            grid.innerHTML += `<button class="key" onclick="processScore(${i})">${i}</button>`;
         }
-        document.getElementById('shot-pop').style.display = 'flex';
+        document.getElementById('modal-keypad').style.display = 'flex';
     }
 
-    function addScore(shots) {
-        let sA = (winner === 'A') ? shots : 0;
-        let sB = (winner === 'B') ? shots : 0;
-        history.push({ end: currentEnd++, a: sA, b: sB });
-        scoreA += sA; scoreB += sB;
-        document.getElementById('shot-pop').style.display = 'none';
-        updateUI();
+    function hideKeypad() { document.getElementById('modal-keypad').style.display = 'none'; }
+
+    function processScore(shots) {
+        const sA = match.activeWinner === 'A' ? shots : 0;
+        const sB = match.activeWinner === 'B' ? shots : 0;
+        match.history.push({ end: match.currentEnd++, a: sA, b: sB, dead: false });
+        match.scoreA += sA;
+        match.scoreB += sB;
+        hideKeypad();
+        updateBoard();
     }
 
-    function recordDead() {
-        history.push({ end: 'DEAD', a: 0, b: 0 });
-        updateUI();
+    function addDeadEnd() {
+        match.history.push({ end: 'DEAD', a: 0, b: 0, dead: true });
+        updateBoard();
     }
 
-    function updateUI() {
-        document.getElementById('totalA').innerText = scoreA;
-        document.getElementById('totalB').innerText = scoreB;
-        document.getElementById('match-status').innerText = "End " + currentEnd;
+    function updateBoard() {
+        document.getElementById('pts-A').innerText = match.scoreA;
+        document.getElementById('pts-B').innerText = match.scoreB;
         
-        const body = document.getElementById('card-body');
-        body.innerHTML = "";
-        [...history].reverse().forEach(e => {
-            body.innerHTML += `<tr><td>${e.end}</td><td>${e.a || '-'}</td><td>${e.b || '-'}</td></tr>`;
-        });
-
-        if (currentEnd > 21) {
-            document.getElementById('sig-section').style.display = 'block';
-            document.getElementById('match-status').innerText = "GAME COMPLETE";
+        let isGameOver = false;
+        if (match.mode === 'points') {
+            isGameOver = (match.scoreA >= 21 || match.scoreB >= 21);
+            document.getElementById('status-text').innerText = isGameOver ? "🏆 MATCH COMPLETE" : `End ${match.currentEnd}`;
+        } else {
+            isGameOver = (match.currentEnd > match.target);
+            document.getElementById('status-text').innerText = isGameOver ? "🏆 MATCH COMPLETE" : `End ${match.currentEnd} of ${match.target}`;
         }
-    }
+        
+        if (isGameOver) {
+            document.getElementById('scoring-controls').style.display = 'none';
+            document.getElementById('final-actions').style.display = 'block';
+        }
 
-    function openSigModal(target) {
-        activeSig = target;
-        document.getElementById('sig-modal').style.display = 'flex';
-        const canvas = document.getElementById('modal-canvas');
-        canvas.width = canvas.offsetWidth; canvas.height = 300;
-        if (!modalPad) modalPad = new SignaturePad(canvas);
-        modalPad.clear();
-    }
-
-    function saveSig() {
-        const data = modalPad.toDataURL();
-        const targetCanvas = document.getElementById(activeSig === 'A' ? 'sig-a' : 'sig-b');
-        const ctx = targetCanvas.getContext('2d');
-        const img = new Image();
-        img.onload = () => ctx.drawImage(img, 0, 0, targetCanvas.width, targetCanvas.height);
-        img.src = data;
-        document.getElementById('sig-modal').style.display = 'none';
-    }
-
-    async function takeImageSnapshot() {
-        const canvas = await html2canvas(document.getElementById('snapshot-target'));
-        canvas.toBlob(blob => {
-            const file = new File([blob], "result.png", {type:"image/png"});
-            if(navigator.share) navigator.share({files:[file]});
+        const table = document.getElementById('history-table');
+        table.innerHTML = "";
+        [...match.history].reverse().forEach(row => {
+            const tr = document.createElement('tr');
+            if (row.dead) tr.className = 'row-dead';
+            tr.innerHTML = `<td>${row.end}</td><td>${row.a || '-'}</td><td>${row.b || '-'}</td>`;
+            table.appendChild(tr);
         });
     }
 
-    // Initialize the first fields
-    adjustPlayerInputs();
+    async function shareResult() {
+        const btn = document.querySelector('#final-actions .btn-lock');
+        btn.innerText = "Processing...";
+        const canvas = await html2canvas(document.getElementById('app-canvas'));
+        canvas.toBlob(blob => {
+            const file = new File([blob], "Bowls_Result.png", { type: "image/png" });
+            if (navigator.share) {
+                navigator.share({ files: [file], title: 'Bowls Result' }).then(() => btn.innerText = "Share Scorecard");
+            } else {
+                const link = document.createElement('a');
+                link.download = 'Scorecard.png';
+                link.href = canvas.toDataURL();
+                link.click();
+                btn.innerText = "Share Scorecard";
+            }
+        });
+    }
+
+    updatePlayerInputs();
 </script>
+
 </body>
 </html>
